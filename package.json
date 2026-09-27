@@ -1,0 +1,17 @@
+{
+  "name": "@atom-forge/ship",
+  "version": "0.1.0",
+  "description": "Small, package-manager-independent release CLI for Node.js and Bun",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/atom-forge/ship.git"
+  },
+  "type": "module",
+  "bin": { "atom-ship": "bin/atom-ship.js" },
+  "exports": "./src/ship.js",
+  "files": ["bin", "src", "README.md", "CHANGELOG.md"],
+  "engines": { "node": ">=22" },
+  "scripts": { "test": "node --test", "pub": "node bin/atom-ship.js", "pub-check": "node bin/atom-ship.js check" },
+  "ship": { "verify": ["node --test"] },
+  "publishConfig": { "access": "public" }
+}
