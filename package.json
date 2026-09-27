@@ -2,6 +2,7 @@
   "name": "@atom-forge/ship",
   "version": "0.1.0",
   "description": "Small, package-manager-independent release CLI for Node.js and Bun",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/atom-forge/ship.git"

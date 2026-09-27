@@ -199,4 +199,4 @@ node bin/atom-ship.js --help
 
 Integration tests use disposable local Git repositories and an in-process registry fixture. They never publish packages or push to external remotes.
 
-This project is not yet published. A license and hosted publishing workflow must be set before its first public release.
+This project is licensed under MIT; see [LICENSE](LICENSE). It is not yet published. A hosted publishing workflow must be set before automated releases.
