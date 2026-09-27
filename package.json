@@ -2,6 +2,10 @@
   "name": "@atom-forge/ship",
   "version": "0.1.0",
   "description": "Small, package-manager-independent release CLI for Node.js and Bun",
+  "author": {
+    "name": "Gergely Laborci",
+    "url": "https://github.com/laborci"
+  },
   "license": "MIT",
   "repository": {
     "type": "git",
