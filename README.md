@@ -177,6 +177,70 @@ split by responsibility so each part can change independently:
 
 Keep `publish.yml` in each package repository. Its release job should check out the tag, install pinned tools and locked dependencies, run `atom-ship validate`, run the project's tests/build, inspect the packed artifact, and publish via the registry's supported authentication mechanism. Ship does not publish or configure Trusted Publishing.
 
+### First publish and Trusted Publishing setup
+
+This setup is required once per new npm package. The package must exist on npm
+before you can configure its Trusted Publisher in the package settings. Make
+the first publish interactively, then connect the package to GitHub Actions for
+future releases. Ship's own first version is `0.1.0`.
+
+```mermaid
+flowchart TD
+    Prepare[Set package metadata, license and first release notes] --> Test[Test and inspect the package contents]
+    Test --> Login[npm login with permission to publish under the package scope]
+    Login --> First[npm publish --access public]
+    First --> Workflow[Add and push a tag-triggered publish.yml workflow]
+    Workflow --> Trust[Configure the npm package Trusted Publisher]
+    Trust --> Next[Run Ship for the next version]
+    Next --> Tag[Push release tag]
+    Tag --> CI[GitHub Actions publishes using OIDC]
+```
+
+For the first Ship publish:
+
+1. Confirm that the npm account can publish under the `@atom-forge` scope.
+2. Prepare the `0.1.0` changelog entry and commit the release metadata. Ship's
+   normal release command increments the version, so do not use it to publish
+   the existing `0.1.0` version.
+3. Run these commands from the Ship repository root. Ship has no build step or
+   external dependencies; other projects must run their own build before packing.
+
+```sh
+npm test
+npm pack --dry-run --ignore-scripts
+npm login
+npm publish --access public
+```
+
+4. Add `.github/workflows/publish.yml`, commit it, and push it to GitHub. The
+   workflow must run on release tag pushes, use a GitHub-hosted runner, grant
+   `id-token: write` and `contents: read`, and publish using a compatible npm CLI.
+   Trusted Publishing requires npm 11.5.1+ and Node 22.14.0+.
+5. On npmjs.com, open `@atom-forge/ship` → **Settings → Trusted publishing** and
+   add a **GitHub Actions** publisher with the following fields:
+
+| npm publisher field | Value for Ship |
+| --- | --- |
+| Organization or user | `atom-forge` |
+| Repository | `ship` |
+| Workflow filename | `publish.yml` (filename only) |
+| Environment name | Leave empty unless the workflow explicitly uses a GitHub environment |
+| Allowed actions | Enable direct `npm publish` for this workflow |
+
+Direct publishing must be explicitly permitted: a publisher configured only for
+`npm stage publish` will not authorize this project's direct publish command.
+The package's `repository.url` must also identify the same GitHub repository.
+
+6. Once the workflow and publisher are configured, use `npm run pub` for the
+   next Ship version (by default `0.1.1`), then `npm run pub-check -- --wait 120`
+   to confirm publication. Write the next changes under `## [Unreleased]` first.
+
+The repository currently contains only the test workflow; this setup section
+does not install a publish workflow or configure the npm account. Ship's
+preflight checks cannot confirm the Trusted Publisher settings or CI success.
+See the [npm Trusted Publishing documentation](https://docs.npmjs.com/trusted-publishers/)
+for the current provider requirements and settings.
+
 For Bun-based packages, the relevant commands after setup are:
 
 ```sh
