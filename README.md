@@ -10,7 +10,84 @@ from an Unreleased changelog entry to a CI-triggering Git tag.
 
 ## Install
 
-Until this package is published, install it from its local directory using your package manager, for example `npm install --save-dev ../ship`. After publication, pin an exact version of `@atom-forge/ship` as a development dependency.
+Install an exact published version of `@atom-forge/ship` as a development
+dependency using your package manager. For local development, install from its
+directory, for example `npm install --save-dev ../ship`.
+
+## Setup wizard
+
+After installing Ship in a project, run:
+
+```sh
+npm exec -- ship-it init
+# Or with Bun:
+bun run ship-it init
+```
+
+The wizard is a one-time setup for a single npm package in a GitHub repository.
+It asks you to confirm the package manager, its exact CI version, the release
+branch, workflow filename, and the commands that should pass before publishing.
+It suggests commands from existing `check`, `test`, `prepack` or `build` scripts;
+enter a JSON array when you want to change them. Commands can use any tooling.
+
+The wizard then:
+
+1. Sets `pub`, `pub-check` and `pub-validate` scripts, the `ship.verify` commands,
+   a matching GitHub repository URL, and public npm publishing settings.
+2. Prepares a changelog and a tag-triggered GitHub Actions workflow with locked
+   dependency installation, exact tag validation, verification commands, package
+   inspection and OIDC publishing.
+3. Asks before writing files or replacing a workflow. A replaced workflow is
+   preserved as a `.ship-backup` file; old standalone release scripts are retained.
+4. Offers to run your verification commands and inspect the package contents.
+5. Offers to commit/push only the displayed setup files and dependency lockfiles.
+   Unrelated changes or an existing staging area stop this step for manual review.
+6. If the current version is not published, offers to stamp its release notes,
+   sign in to npm if needed, and perform the first publish. This always requires
+   confirmation and uses the existing version rather than bumping it.
+7. Creates and verifies the npm Trusted Publisher for the chosen workflow,
+   asking before granting the workflow publishing access. Matching existing trust
+   is reused. npm may require browser authentication or 2FA. If this challenge
+   prevents capturing the publisher list, the wizard displays it interactively
+   and asks you to confirm the exact repository, workflow and permissions.
+
+```mermaid
+flowchart TD
+    Start[Install Ship and run ship-it init] --> Choices[Confirm manager, checks, branch and workflow]
+    Choices --> Files[Review and write setup files]
+    Files --> Verify[Verify and inspect the package]
+    Verify --> Git[Confirm setup commit and push]
+    Git --> Published{Current npm version exists?}
+    Published -- No --> Bootstrap[Confirm first publish with npm login / 2FA]
+    Published -- Yes --> Trust[Configure or reuse Trusted Publisher]
+    Bootstrap --> Trust
+    Trust --> Ready[Ready for the project's pub command]
+```
+
+Use `ship-it init --dry-run` for a read-only local suggestion: it makes no network
+requests, prompts, file changes, commits, publishes, or trust changes. Interactive
+`init` reads registry metadata and requires network access. Declining a later step
+keeps the local setup so you can resume by running `init` again; failures also keep
+the prepared files and any completed remote operations rather than undoing them.
+
+Requirements: an existing Git repository with a GitHub remote and at least one
+commit, an installed Ship dependency, and an npm account with publishing rights.
+Commit source changes first; the wizard can include the dependency's manifest and
+lockfile changes, but will not silently commit unrelated source files. For new
+packages, choose and apply a license before the first publish.
+
+The chosen package manager needs a committed lockfile for CI (npm, Bun, pnpm or
+Yarn Classic). Ship itself skips installation because it has no dependencies.
+Cross-repository `file:`/`link:` dependencies require custom CI checkout steps;
+replace them with registry dependencies before using the generated workflow.
+The local npm CLI must be at least 11.15.0 for Trusted Publisher management. The
+wizard does not upgrade tools globally, install private-dependency credentials,
+change GitHub Actions policies, or bypass npm's account authentication.
+
+The wizard is currently in the repository; npm version `0.1.0` does not include
+it. Until the next Ship release, use a local checkout to try it.
+
+## Manual configuration
 
 ```json
 {
@@ -32,6 +109,8 @@ The executable uses Node by default. To explicitly use Bun, invoke `bun ./node_m
 
 ```sh
 ship-it                    # patch
+ship-it init
+ship-it init --dry-run
 ship-it minor
 ship-it major
 ship-it 2.0.0
@@ -188,6 +267,10 @@ split by responsibility so each part can change independently:
 | `registry.js` | Queries the exact package version from the registry |
 | `files.js` | Snapshots, updates, and restores release metadata files |
 | `verify.js` | Runs the project's configured verification commands |
+| `init.js` | Coordinates interactive local setup, bootstrap publish and trusted publisher setup |
+| `init-plan.js` | Suggests project settings and prepares manifest/changelog content |
+| `workflow.js` | Generates the project's GitHub Actions publishing workflow |
+| `prompts.js` | Terminal questions and confirmations for the wizard |
 
 ## Command details
 
