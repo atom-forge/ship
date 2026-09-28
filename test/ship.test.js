@@ -16,7 +16,7 @@ import { execFileSync, spawn } from 'node:child_process';
 import { createServer } from 'node:http';
 import { nextVersion, stampChangelog } from '../src/ship.js';
 
-const cli = fileURLToPath(new URL('../bin/atom-ship.js', import.meta.url));
+const cli = fileURLToPath(new URL('../bin/ship-it.js', import.meta.url));
 
 test('stable version increments and rejected regressions', () => {
   assert.equal(nextVersion('1.2.3', 'patch'), '1.2.4');
@@ -36,7 +36,7 @@ test('changelog stamping preserves notes and rejects empty/duplicate releases', 
 });
 
 test('CLI integration: preflight, dry run, lockfiles, atomic push, check and recovery', async t => {
-  const root = mkdtempSync(join(tmpdir(), 'atom-ship-'));
+  const root = mkdtempSync(join(tmpdir(), 'ship-it-'));
   const repo = join(root, 'repo');
   const remote = join(root, 'remote.git');
   mkdirSync(repo);

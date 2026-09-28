@@ -12,11 +12,11 @@
     "url": "git+https://github.com/atom-forge/ship.git"
   },
   "type": "module",
-  "bin": { "atom-ship": "bin/atom-ship.js" },
+  "bin": { "ship-it": "bin/ship-it.js" },
   "exports": "./src/ship.js",
   "files": ["bin", "src", "README.md", "CHANGELOG.md"],
   "engines": { "node": ">=22" },
-  "scripts": { "test": "node --test", "pub": "node bin/atom-ship.js", "pub-check": "node bin/atom-ship.js check" },
+  "scripts": { "test": "node --test", "pub": "node bin/ship-it.js", "pub-check": "node bin/ship-it.js check" },
   "ship": { "verify": ["node --test"] },
   "publishConfig": { "access": "public" }
 }

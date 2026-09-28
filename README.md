@@ -15,8 +15,8 @@ Until this package is published, install it from its local directory using your 
 ```json
 {
   "scripts": {
-    "pub": "atom-ship",
-    "pub-check": "atom-ship check"
+    "pub": "ship-it",
+    "pub-check": "ship-it check"
   },
   "ship": {
     "verify": ["npm test", "npm run build"]
@@ -26,19 +26,19 @@ Until this package is published, install it from its local directory using your 
 
 Use any project commands: `bun run prepack`, `pnpm test`, `make check`, etc. Commands run in the repository root using the system shell. Only configure trusted commands.
 
-The executable uses Node by default. To explicitly use Bun, invoke `bun ./node_modules/@atom-forge/ship/bin/atom-ship.js`.
+The executable uses Node by default. To explicitly use Bun, invoke `bun ./node_modules/@atom-forge/ship/bin/ship-it.js`.
 
 ## Commands
 
 ```sh
-atom-ship                    # patch
-atom-ship minor
-atom-ship major
-atom-ship 2.0.0
-atom-ship minor --dry-run
-atom-ship check
-atom-ship check --wait 120
-atom-ship validate --tag v1.2.3
+ship-it                    # patch
+ship-it minor
+ship-it major
+ship-it 2.0.0
+ship-it minor --dry-run
+ship-it check
+ship-it check --wait 120
+ship-it validate --tag v1.2.3
 ```
 
 Ship releases stable `x.y.z` versions. Prereleases, monorepo workspaces, automatic dependency upgrades and non-npm registries are outside this initial version's scope. It operates on one npm-format package at the Git repository root. Registry checks use public HTTP metadata, without npm credentials. Publishing itself belongs to CI.
@@ -69,7 +69,7 @@ Any failure stops the release before Ship writes files.
 
 ```mermaid
 flowchart TD
-    Start([atom-ship minor]) --> Load[Read package.json and ship config]
+    Start([ship-it minor]) --> Load[Read package.json and ship config]
     Load --> Ready{Config and Git state valid?}
     Ready -- No --> Stop([Stop with the failed check])
     Ready -- Yes --> Version[Calculate next stable x.y.z version]
@@ -118,7 +118,7 @@ flowchart TD
 
 ### Local responsibilities
 
-`atom-ship` performs only the local, reviewable parts of a release:
+`ship-it` performs only the local, reviewable parts of a release:
 
 1. Reads the package version and `ship` configuration.
 2. Requires a clean repository on the configured remote-equivalent branch.
@@ -153,22 +153,22 @@ release commit automatically could destroy useful recovery state.
 ```mermaid
 sequenceDiagram
     participant Developer
-    participant Ship as atom-ship
+    participant Ship as ship-it
     participant Git as Git remote
     participant CI as Tag-triggered CI
     participant Registry as npm registry
 
-    Developer->>Ship: atom-ship minor
+    Developer->>Ship: ship-it minor
     Ship->>Git: verify remote main equals HEAD
     Ship->>Registry: look up package@targetVersion
     Ship->>Ship: run configured verify commands
     Ship->>Git: commit release vX.Y.Z and tag vX.Y.Z
     Ship->>Git: atomic push branch + tag
     Git-->>CI: push tag vX.Y.Z
-    CI->>Ship: atom-ship validate
+    CI->>Ship: ship-it validate
     CI->>CI: install locked dependencies, test, build, pack check
     CI->>Registry: publish authenticated package
-    Developer->>Ship: atom-ship check --wait 120
+    Developer->>Ship: ship-it check --wait 120
     Ship->>Registry: look up exact package@X.Y.Z
 ```
 
@@ -199,7 +199,7 @@ split by responsibility so each part can change independently:
 
 ## CI integration
 
-Keep `publish.yml` in each package repository. Its release job should check out the tag, install pinned tools and locked dependencies, run `atom-ship validate`, run the project's tests/build, inspect the packed artifact, and publish via the registry's supported authentication mechanism. Ship does not publish or configure Trusted Publishing.
+Keep `publish.yml` in each package repository. Its release job should check out the tag, install pinned tools and locked dependencies, run `ship-it validate`, run the project's tests/build, inspect the packed artifact, and publish via the registry's supported authentication mechanism. Ship does not publish or configure Trusted Publishing.
 
 ### First publish and Trusted Publishing setup
 
@@ -269,7 +269,7 @@ For Bun-based packages, the relevant commands after setup are:
 
 ```sh
 bun install --frozen-lockfile
-bun ./node_modules/@atom-forge/ship/bin/atom-ship.js validate
+bun ./node_modules/@atom-forge/ship/bin/ship-it.js validate
 bun run prepack
 npm pack --dry-run --ignore-scripts
 npm publish --access public --ignore-scripts
@@ -282,7 +282,7 @@ For TypeScript libraries, replace `prepack` with the appropriate build command. 
 ```sh
 node --test
 bun test
-node bin/atom-ship.js --help
+node bin/ship-it.js --help
 ```
 
 Integration tests use disposable local Git repositories and an in-process registry fixture. They never publish packages or push to external remotes.
