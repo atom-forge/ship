@@ -60,36 +60,60 @@ Unknown settings are rejected. Set `verify` explicitly for your project; Ship do
 
 ## What happens during a release
 
+### Phase 1 — Preflight and release plan
+
+Ship checks the package configuration, repository root, clean Git state and
+release branch. It then calculates the target version, checks local/remote tags
+and the registry, and validates the tracked release files and Unreleased notes.
+Any failure stops the release before Ship writes files.
+
 ```mermaid
 flowchart TD
     Start([atom-ship minor]) --> Load[Read package.json and ship config]
-    Load --> Config{Package and config valid?}
-    Config -- No --> StopConfig([Stop: explain invalid configuration])
-    Config -- Yes --> GitRoot{Run at Git repository root?}
-    GitRoot -- No --> StopRoot([Stop: use the repository root])
-    GitRoot -- Yes --> Clean{Index and working tree clean?}
-    Clean -- No --> StopClean([Stop: commit, stash, or remove changes])
-    Clean -- Yes --> Branch{On configured branch and equal to remote HEAD?}
-    Branch -- No --> StopBranch([Stop: update or switch branch])
-    Branch -- Yes --> Version[Calculate next stable x.y.z version]
+    Load --> Ready{Config and Git state valid?}
+    Ready -- No --> Stop([Stop with the failed check])
+    Ready -- Yes --> Version[Calculate next stable x.y.z version]
     Version --> Available{Tag unused locally/remotely and version unpublished?}
-    Available -- No --> StopTaken([Stop: choose or repair release version])
-    Available -- Yes --> Changelog{Exactly one nonempty Unreleased section?}
-    Changelog -- No --> StopNotes([Stop: repair CHANGELOG.md])
-    Changelog -- Yes --> DryRun{--dry-run?}
+    Available -- No --> Stop
+    Available -- Yes --> Notes{Release files tracked and changelog valid?}
+    Notes -- No --> Stop
+    Notes -- Yes --> DryRun{--dry-run?}
     DryRun -- Yes --> Plan([Print plan; no commands or mutations])
-    DryRun -- No --> Verify[Run configured ship.verify commands]
+    DryRun -- No --> Next([Continue to Phase 2])
+```
+
+### Phase 2 — Verification and release commit
+
+Ship runs the configured commands, checks that the working tree is still clean,
+then writes and commits the release metadata. If writing, staging or committing
+fails before the commit succeeds, it restores its release files and clears their
+staging.
+
+```mermaid
+flowchart TD
+    Start([Preflight passed]) --> Verify[Run configured ship.verify commands]
     Verify --> Verified{Commands passed and tree still clean?}
     Verified -- No --> StopVerify([Stop: fix verification or its side effects])
-    Verified -- Yes --> Update[Write package version, npm lockfile version, and changelog release heading]
-    Update --> Commit[Stage only release files and create release vX.Y.Z commit]
-    Commit --> CommitOK{Commit succeeds?}
-    CommitOK -- No --> Restore([Restore original files and unstage Ship changes])
-    CommitOK -- Yes --> Tag[Create vX.Y.Z tag]
-    Tag --> Push[Atomically push configured branch and only this tag]
-    Push --> PushOK{Remote accepts atomic push?}
-    PushOK -- Yes --> CI([Tag push starts CI publish workflow])
-    PushOK -- No --> Preserve([Keep local commit/tag for explicit recovery])
+    Verified -- Yes --> Update[Write package and npm lockfile versions plus changelog heading]
+    Update --> Commit[Stage release files and create release vX.Y.Z commit]
+    Update -- Failure --> Restore([Restore original files and unstage Ship changes])
+    Commit -- Failure --> Restore
+    Commit -- Success --> Next([Continue to Phase 3])
+```
+
+### Phase 3 — Tag and atomic push
+
+Ship creates the release tag and pushes the branch and only that tag together.
+A configured publish workflow can then start in CI. A tag or push failure keeps
+the local release commit and any created tag for manual recovery.
+
+```mermaid
+flowchart TD
+    Start([Release commit created]) --> Tag[Create vX.Y.Z tag]
+    Tag -- Success --> Push[Atomically push configured branch and this tag]
+    Tag -- Failure --> Preserve([Keep local release state for recovery])
+    Push -- Failure --> Preserve
+    Push -- Success --> CI([Tag push triggers the configured CI workflow])
 ```
 
 ### Local responsibilities
