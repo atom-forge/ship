@@ -259,9 +259,16 @@ The package's `repository.url` must also identify the same GitHub repository.
    next Ship version (by default `0.1.1`), then `npm run pub-check -- --wait 120`
    to confirm publication. Write the next changes under `## [Unreleased]` first.
 
-The repository currently contains only the test workflow; this setup section
-does not install a publish workflow or configure the npm account. Ship's
-preflight checks cannot confirm the Trusted Publisher settings or CI success.
+Ship includes a tag-triggered `.github/workflows/publish.yml`. It validates the
+release tag, tests on Node and Bun, inspects the package, and publishes using
+OIDC. The workflow pins npm 11.16.0 and Bun 1.4.0 and uses Node 24. It needs no
+dependency installation or build step because Ship has no external dependencies.
+The npm Trusted Publisher still needs to be configured for the exact repository
+and workflow. Ship's preflight checks cannot confirm these settings or CI success.
+
+The Ship repository is private. npm Trusted Publishing supports this, but npm
+does not generate provenance for private repositories; the workflow therefore
+does not force `--provenance`. It does not require an npm publish-token secret.
 See the [npm Trusted Publishing documentation](https://docs.npmjs.com/trusted-publishers/)
 for the current provider requirements and settings.
 
@@ -287,4 +294,6 @@ node bin/ship-it.js --help
 
 Integration tests use disposable local Git repositories and an in-process registry fixture. They never publish packages or push to external remotes.
 
-This project is licensed under MIT; see [LICENSE](LICENSE). It is not yet published. A hosted publishing workflow must be set before automated releases.
+This project is licensed under MIT; see [LICENSE](LICENSE). Version `0.1.0` is
+published on npm. Future releases use the included publishing workflow after the
+npm Trusted Publisher is configured.
