@@ -8,6 +8,8 @@ and never stores registry credentials.
 The goal is a small project configuration and a repeatable, inspectable path
 from an Unreleased changelog entry to a CI-triggering Git tag.
 
+The [learning guide](book/book.md) walks through concepts, recipes and troubleshooting.
+
 ## Install
 
 Install an exact published version of `@atom-forge/ship` as a development

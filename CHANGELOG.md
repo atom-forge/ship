@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 ### Added
+- BookMD learning guide in `book/` covering configuration, the release flow, setup, CI and troubleshooting.
 - Interactive `ship-it init` wizard for local release configuration, CI generation, first npm publish and Trusted Publisher setup, with confirmations and resumable progress.
 - Tag-triggered GitHub Actions publishing with OIDC authentication and Node/Bun validation.
 
