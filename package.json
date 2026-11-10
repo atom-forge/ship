@@ -1,6 +1,6 @@
 {
   "name": "@atom-forge/ship",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Small, package-manager-independent release CLI for Node.js and Bun",
   "author": {
     "name": "Gergely Laborci",
@@ -12,11 +12,30 @@
     "url": "git+https://github.com/atom-forge/ship.git"
   },
   "type": "module",
-  "bin": { "ship-it": "bin/ship-it.js" },
+  "bin": {
+    "ship-it": "bin/ship-it.js"
+  },
   "exports": "./src/ship.js",
-  "files": ["bin", "src", "README.md", "CHANGELOG.md"],
-  "engines": { "node": ">=22" },
-  "scripts": { "test": "node --test", "pub": "node bin/ship-it.js", "pub-check": "node bin/ship-it.js check" },
-  "ship": { "verify": ["node --test"] },
-  "publishConfig": { "access": "public" }
+  "files": [
+    "bin",
+    "src",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "node --test",
+    "pub": "node bin/ship-it.js",
+    "pub-check": "node bin/ship-it.js check"
+  },
+  "ship": {
+    "verify": [
+      "node --test"
+    ]
+  },
+  "publishConfig": {
+    "access": "public"
+  }
 }

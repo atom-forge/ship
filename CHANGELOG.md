@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-10
+
 ### Added
 - `TODO.md` for planned work and a `notes/` folder for ideas, plans, and specs, with rules in `AGENTS.md`: neither is an instruction, finished items leave `TODO.md`, and neither is shipped.
 - BookMD learning guide in `book/` covering configuration, the release flow, setup, CI and troubleshooting.
