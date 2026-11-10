@@ -8,7 +8,11 @@ and never stores registry credentials.
 The goal is a small project configuration and a repeatable, inspectable path
 from an Unreleased changelog entry to a CI-triggering Git tag.
 
-The [learning guide](book/book.md) walks through concepts, recipes and troubleshooting.
+## Documentation
+
+- [The Ship book](https://books.atom-forge.eu) — concepts, the release flow, setup, CI, recipes and troubleshooting.
+
+Developing Ship itself starts in [AGENTS.md](AGENTS.md).
 
 ## Install
 
