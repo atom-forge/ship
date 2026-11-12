@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+### Added
+- `ship.after`: ordered shell commands that run after the release commit and tag are pushed, with `SHIP_VERSION` and `SHIP_TAG` in their environment (for example `ship-it check --wait 900` followed by a site deploy). A dry run lists them without running them. A failing command exits with an error that names it and the remaining commands; the release itself stays done.
+
 ## [0.2.0] - 2026-11-10
 
 ### Added

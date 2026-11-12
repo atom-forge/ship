@@ -22,13 +22,14 @@ teaches: [ship-config, ship-commands]
 The `ship` object is optional, but you should always set `verify`: Ship does not assume that any test or build script exists.
 
 > [!warning] Only configure trusted commands
-> `verify` commands run in the repository root through the system shell. Treat them like any other script in your project.
+> `verify` and `after` commands run in the repository root through the system shell. Treat them like any other script in your project.
 
 ## Settings
 
 | Field | Default | Purpose |
 |---|---|---|
 | `verify` | `[]` | Ordered shell commands; any failure blocks the release |
+| `after` | `[]` | Ordered shell commands run after the release is pushed, for example waiting for the registry and deploying a site; see [[03-release-flow#Phase 4 — After-release commands]] |
 | `branch` | `main` | Branch the release must run on |
 | `remote` | `origin` | Git remote used for branch and tag checks and for the push |
 | `tagPrefix` | `v` | Prefix of the release tag (`v1.2.3`) |
@@ -73,7 +74,7 @@ current 1.4.2  +  1.4.2  ->  error: the release version must increase
 
 ### --dry-run
 
-A dry run performs the read-only preflight checks and prints the plan as JSON: package, old and new version, tag, branch, verify commands, the files that would change, and `"push": "atomic"`. It runs no verification commands and changes nothing. It still needs network access to the remote and the registry.
+A dry run performs the read-only preflight checks and prints the plan as JSON: package, old and new version, tag, branch, verify commands, the files that would change, `"push": "atomic"`, and the after-release commands. It runs neither the verification nor the after-release commands and changes nothing. It still needs network access to the remote and the registry.
 
 ### check
 

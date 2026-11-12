@@ -114,3 +114,64 @@ test('CLI integration: preflight, dry run, lockfiles, atomic push, check and rec
   assert.equal(git('ls-remote', 'origin', 'refs/tags/v1.1.1'), '');
   assert.equal(git('tag', '--list', 'v1.1.1'), 'v1.1.1');
 });
+
+test('after-release commands run once the release is pushed, with SHIP_VERSION and SHIP_TAG', async t => {
+  const root = mkdtempSync(join(tmpdir(), 'ship-after-'));
+  const repo = join(root, 'repo');
+  const remote = join(root, 'remote.git');
+  mkdirSync(repo);
+  const git = (...args) => execFileSync('git', args, { cwd: repo, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
+  const server = createServer((req, res) => { res.statusCode = 404; res.end('{}'); });
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  t.after(async () => { await new Promise(resolve => server.close(resolve)); rmSync(root, { recursive: true, force: true }); });
+  const run = (...args) => new Promise((resolve, reject) => {
+    const child = spawn(process.execPath, [cli, ...args], { cwd: repo, env: { ...process.env, GITHUB_REF_NAME: '' } });
+    let output = '';
+    child.stdout.on('data', data => output += data);
+    child.stderr.on('data', data => output += data);
+    child.on('error', reject);
+    child.on('close', code => resolve({ code, output }));
+  });
+  git('init', '--initial-branch=main');
+  git('config', 'user.name', 'Ship Test');
+  git('config', 'user.email', 'ship@example.invalid');
+  git('config', 'commit.gpgsign', 'false');
+  git('config', 'tag.gpgsign', 'false');
+  git('init', '--bare', remote);
+  git('remote', 'add', 'origin', remote);
+  const registry = `http://127.0.0.1:${server.address().port}`;
+  const writePkg = (version, after) => writeFileSync(join(repo, 'package.json'), JSON.stringify({ name: '@test/after', version, ship: { registry, after } }, null, 2) + '\n');
+  const notes = () => writeFileSync(join(repo, 'CHANGELOG.md'), readFileSync(join(repo, 'CHANGELOG.md'), 'utf8').replace('## [Unreleased]\n', '## [Unreleased]\n\n### Fixed\n- Another bug\n'));
+  writePkg('1.0.0', ['node -e "require(\'fs\').appendFileSync(\'../after.log\', process.env.SHIP_TAG + \' \' + process.env.SHIP_VERSION + \'\\\\n\')"']);
+  writeFileSync(join(repo, 'CHANGELOG.md'), '# Changelog\n\n## [Unreleased]\n\n### Added\n- A feature\n');
+  git('add', '.'); git('commit', '-m', 'initial'); git('push', '-u', 'origin', 'main');
+
+  // Dry run lists the commands without running them.
+  let result = await run('patch', '--dry-run');
+  assert.equal(result.code, 0, result.output);
+  assert.match(result.output, /"after": \[/);
+  assert.throws(() => readFileSync(join(root, 'after.log')));
+
+  result = await run('patch');
+  assert.equal(result.code, 0, result.output);
+  assert.equal(readFileSync(join(root, 'after.log'), 'utf8'), 'v1.0.1 1.0.1\n');
+
+  // A failing command reports the release as done and names the steps left; the release stays pushed.
+  writePkg('1.0.1', ['node -e "process.exit(3)"', 'echo second']);
+  notes();
+  git('add', '.'); git('commit', '-m', 'failing after'); git('push');
+  result = await run('patch');
+  assert.notEqual(result.code, 0);
+  assert.match(result.output, /Released v1\.0\.2, but an after-release command failed/);
+  assert.match(result.output, /echo second/);
+  assert.match(git('ls-remote', '--tags', 'origin', 'refs/tags/v1.0.2'), /refs\/tags\/v1.0.2/);
+  assert.equal(git('status', '--porcelain'), '');
+
+  // Invalid configuration is rejected before anything is written.
+  writePkg('1.0.2', 'deploy');
+  notes();
+  git('add', '.'); git('commit', '-m', 'invalid after'); git('push');
+  result = await run('patch', '--dry-run');
+  assert.notEqual(result.code, 0);
+  assert.match(result.output, /ship\.after must be an array of commands/);
+});

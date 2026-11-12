@@ -135,6 +135,7 @@ Optional `package.json.ship` fields:
 | Field | Default | Purpose |
 | --- | --- | --- |
 | `verify` | `[]` | Ordered shell commands; failure blocks release |
+| `after` | `[]` | Ordered shell commands run after the successful push (with `SHIP_VERSION` and `SHIP_TAG`); a failure is reported, the release stays done |
 | `branch` | `main` | Required release branch |
 | `remote` | `origin` | Git remote for branch/tag checks and push |
 | `tagPrefix` | `v` | Release tag prefix |
@@ -200,6 +201,16 @@ flowchart TD
     Push -- Failure --> Preserve
     Push -- Success --> CI([Tag push triggers the configured CI workflow])
 ```
+
+### Phase 4 — After-release commands
+
+If `ship.after` is set, Ship runs those commands in order after the successful
+push, with `SHIP_VERSION` and `SHIP_TAG` in their environment, for example
+`["ship-it check --wait 900", "bun run deploy"]` to wait for the CI publish and
+then deploy a site. Run `ship-it` through a package script so local binaries are
+on the `PATH`. The release is already done at this point: a failing command makes
+Ship exit with an error that names it and the commands left, to be run by hand.
+Never run `ship-it` again to retry them.
 
 ### Local responsibilities
 

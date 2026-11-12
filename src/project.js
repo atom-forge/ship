@@ -10,7 +10,7 @@ import { isAbsolute, relative, resolve } from 'node:path';
 import { fail } from './errors.js';
 import { stableVersion } from './version.js';
 
-const defaults = { branch: 'main', remote: 'origin', tagPrefix: 'v', changelog: 'CHANGELOG.md', verify: [], registry: 'https://registry.npmjs.org' };
+const defaults = { branch: 'main', remote: 'origin', tagPrefix: 'v', changelog: 'CHANGELOG.md', verify: [], after: [], registry: 'https://registry.npmjs.org' };
 const configKeys = new Set(Object.keys(defaults));
 
 export function project() {
@@ -20,7 +20,9 @@ export function project() {
   const config = { ...defaults, ...pkg.ship };
   if (!pkg.name || !stableVersion.test(pkg.version)) fail('package.json needs a name and stable version.');
   if (pkg.private) fail('Private packages cannot be released.');
-  if (!Array.isArray(config.verify) || config.verify.some(command => typeof command !== 'string' || !command.trim())) fail('ship.verify must be an array of commands.');
+  for (const key of ['verify', 'after']) {
+    if (!Array.isArray(config[key]) || config[key].some(command => typeof command !== 'string' || !command.trim())) fail(`ship.${key} must be an array of commands.`);
+  }
   for (const key of ['branch', 'remote', 'tagPrefix', 'changelog', 'registry']) {
     if (typeof config[key] !== 'string' || !config[key] || config[key].startsWith('-')) fail(`Invalid ship.${key}.`);
   }

@@ -64,6 +64,29 @@ If writing, staging or committing fails, Ship restores the original file content
 
 Ship creates the `vX.Y.Z` tag and pushes the branch and **only that tag** in one `git push --atomic`. Either both refs update or neither does. The tag push is the signal that starts CI.
 
+## Phase 4 — After-release commands
+
+When `ship.after` is set, Ship runs its commands in order once the push succeeded. Use them for steps that belong to a release but come after the publish, such as waiting until CI has published the version and then deploying a documentation or showcase site:
+
+```json
+{
+  "scripts": {
+    "pub": "ship-it"
+  },
+  "ship": {
+    "verify": ["bun run check", "bun run prepack"],
+    "after": ["ship-it check --wait 900", "bun run deploy"]
+  }
+}
+```
+
+- The commands get `SHIP_VERSION` (`1.2.3`) and `SHIP_TAG` (`v1.2.3`) in their environment.
+- Run `ship-it` through a package script (`npm run pub`, `bun run pub`), so that `ship-it` and other local binaries are on the `PATH` of the after-release commands.
+- `ship-it check --wait` returns as soon as the version is on the registry, so a deploy placed after it never shows a version that failed to publish.
+
+> [!warning] A failing after-release command does not undo the release
+> The release is already pushed when these commands run. If one fails, Ship stops, exits with an error, and names the failed command and the ones left. Fix the cause and run those by hand; do not run `ship-it` again, which would release the next version.
+
 ## Failure and recovery
 
 ```mermaid
@@ -80,10 +103,11 @@ flowchart LR
 | Preflight or verification | Nothing written | Fix the reported problem, run again |
 | Writing, staging or committing | Original files restored | Fix the cause (for example a hook), run again |
 | Tagging or pushing | Release commit and possibly the tag kept | Inspect refs and finish by hand |
+| An after-release command | Release pushed; later commands not run | Fix the cause, run the failed and the remaining commands by hand |
 
 > [!danger] Never bump again after a late failure
 > If the release commit already exists, running `ship-it` again would release the *next* version and skip the one you meant to ship. Ship keeps the commit on purpose, because discarding a release commit automatically could destroy useful recovery state. Inspect `git log`, `git tag` and `git ls-remote --tags origin`, then complete the existing tag and push.
 
 ## What Ship does not do
 
-It does not publish, build, or configure Trusted Publishing, and it cannot confirm that CI succeeded. Use `ship-it check --wait` afterwards to confirm that the version reached the registry.
+It does not publish, build, or configure Trusted Publishing, and it cannot confirm that CI succeeded. Use `ship-it check --wait` afterwards, or as an after-release command, to confirm that the version reached the registry.

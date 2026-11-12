@@ -16,7 +16,7 @@ import { ensureClean, ensureReleaseBranch, ensureUnusedTag, git, pushRelease } f
 import { releaseFiles } from './project.js';
 import { isPublished } from './registry.js';
 import { nextVersion } from './version.js';
-import { verify } from './verify.js';
+import { afterRelease, verify } from './verify.js';
 
 export function validate(pkg, config, tag) {
   if (!tag || tag !== `${config.tagPrefix}${pkg.version}`) fail('Tag and package.json version must match exactly.');
@@ -50,7 +50,7 @@ export async function release(pkg, config, bump, dryRun) {
   const original = snapshot(files);
   const changelog = stampChangelog(original.get(config.changelog), version);
   if (dryRun) {
-    console.log(JSON.stringify({ package: pkg.name, from: pkg.version, version, tag, branch: config.branch, verify: config.verify, files, push: 'atomic' }, null, 2));
+    console.log(JSON.stringify({ package: pkg.name, from: pkg.version, version, tag, branch: config.branch, verify: config.verify, files, push: 'atomic', after: config.after }, null, 2));
     return;
   }
   verify(config.verify);
@@ -75,4 +75,5 @@ export async function release(pkg, config, bump, dryRun) {
     }
     fail(`Release commit preserved. Inspect local/remote tag ${tag} before retrying; do not bump again. ${error.message}`);
   }
+  afterRelease(config.after, { version, tag });
 }

@@ -14,7 +14,7 @@ import { init } from './init.js';
 
 export async function main(args = []) {
   if (args.includes('--help') || args[0] === 'help') {
-    console.log('ship-it init [--dry-run]\nship-it [patch|minor|major|x.y.z] [--dry-run]\nship-it check [--wait seconds]\nship-it validate [--tag vX.Y.Z]\nConfiguration: package.json "ship": { "verify": ["npm test"] }');
+    console.log('ship-it init [--dry-run]\nship-it [patch|minor|major|x.y.z] [--dry-run]\nship-it check [--wait seconds]\nship-it validate [--tag vX.Y.Z]\nConfiguration: package.json "ship": { "verify": ["npm test"], "after": ["ship-it check --wait 900"] }');
     return;
   }
   const command = args[0]?.startsWith('--') ? 'patch' : (args.shift() ?? 'patch');
