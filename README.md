@@ -10,7 +10,7 @@ from an Unreleased changelog entry to a CI-triggering Git tag.
 
 ## Documentation
 
-- [The Ship book](https://books.atom-forge.eu) — concepts, the release flow, setup, CI, recipes and troubleshooting.
+- [The Ship book](https://books.atomforge.eu) — concepts, the release flow, setup, CI, recipes and troubleshooting.
 
 Developing Ship itself starts in [AGENTS.md](AGENTS.md).
 
